@@ -1,0 +1,39 @@
+# macOS
+.DS_Store
+*.swp
+
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Python backend
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.db
+
+# Test / CI
+coverage/
+*.log
+
+# Secrets
+.env
+.env.local
+
+# Claude Code (local config)
+.claude/settings.json
+.claude/tmp/
+
+# Session-specific
+handoff.md
