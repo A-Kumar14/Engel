@@ -66,13 +66,6 @@ enum GlobeTone: String, Hashable {
         }
     }
 
-    var hint: String {
-        switch self {
-        case .green: return "energy \u{00B7} wins \u{00B7} aliveness"
-        case .red: return "friction \u{00B7} heaviness \u{00B7} stuck"
-        }
-    }
-
     var editorial: String {
         switch self {
         case .green: return "What gave you energy this week."
@@ -233,11 +226,6 @@ struct ContentView: View {
                             .kerning(-0.36)
                             .foregroundStyle(.primary)
                             .padding(.top, 20)
-
-                        Text(headerSubtitle)
-                            .font(AppTypography.monoXS)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 10)
                     } else {
                         Text(selectedTab.title)
                             .font(AppTypography.display(size: 24, weight: .light))
@@ -289,24 +277,12 @@ struct ContentView: View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Greeting
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(greetingTitle)
-                            .font(AppTypography.display(size: 22, weight: .light))
-                            .foregroundStyle(ThemeTokens.colors.ink)
-                        Text("What's true right now?")
-                            .font(AppTypography.display(size: 22, weight: .light))
-                            .foregroundStyle(ThemeTokens.colors.inkDim)
-                    }
-                    .padding(.top, 24)
-
                     // Two side-by-side globe cards
                     HStack(spacing: 12) {
                         GlobeCard(
                             tone: .green,
                             count: greenCount,
-                            title: "Green",
-                            hint: "energy \u{00B7} wins \u{00B7} aliveness"
+                            title: "Green"
                         ) {
                             navigationPath.append(AppDestination.globeDetail(.green))
                         }
@@ -314,13 +290,12 @@ struct ContentView: View {
                         GlobeCard(
                             tone: .red,
                             count: redCount,
-                            title: "Red",
-                            hint: "friction \u{00B7} heaviness \u{00B7} stuck"
+                            title: "Red"
                         ) {
                             navigationPath.append(AppDestination.globeDetail(.red))
                         }
                     }
-                    .padding(.top, 22)
+                    .padding(.top, 24)
 
                     // Unsorted pill (only if there are any)
                     if unsortedCount > 0 {
@@ -383,16 +358,6 @@ struct ContentView: View {
             }
             .padding(.horizontal, 18)
             .padding(.bottom, 110)
-        }
-    }
-
-    private var greetingTitle: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12: return "Good morning."
-        case 12..<17: return "Good afternoon."
-        case 17..<22: return "Good evening."
-        default: return "Hello."
         }
     }
 
@@ -948,7 +913,7 @@ struct ContentView: View {
 
     private var headerSubtitle: String {
         switch selectedTab {
-        case .home: return "Two globes, one weekly noticing."
+        case .home: return ""
         case .capture: return "Capture first. Sort and meaning later."
         case .entries: return "Your fragments, kept visible."
         case .insights: return "Patterns, not prescriptions."
@@ -984,7 +949,6 @@ private struct GlobeCard: View {
     let tone: GlobeType
     let count: Int
     let title: String
-    let hint: String
     let onTap: () -> Void
 
     var body: some View {
@@ -1009,10 +973,6 @@ private struct GlobeCard: View {
                         .foregroundStyle(tone == .green
                                          ? ThemeTokens.colors.greenDeep
                                          : ThemeTokens.colors.redDeep)
-
-                    Text(hint)
-                        .font(AppTypography.mono(size: 10, weight: .regular))
-                        .foregroundStyle(ThemeTokens.colors.inkDim)
                 }
             }
             .padding(.vertical, 18)
