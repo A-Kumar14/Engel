@@ -94,7 +94,7 @@ struct GlobeDetailView: View {
                     .textCase(.uppercase)
                     .foregroundStyle(tone.base)
 
-                Text(tone.hint)
+                Text(tone.editorial)
                     .font(AppTypography.mono(size: 11, weight: .regular))
                     .foregroundStyle(ThemeTokens.colors.inkDim)
             }
