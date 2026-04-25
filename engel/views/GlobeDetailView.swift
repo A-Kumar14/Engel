@@ -405,7 +405,7 @@ struct GlobeDetailView: View {
 
 // MARK: - Globe View (animated)
 
-private struct GlobeView: View {
+struct GlobeView: View {
     let tone: GlobeTone
     let size: CGFloat
     let entryCount: Int

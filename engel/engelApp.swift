@@ -15,6 +15,8 @@ struct engelApp: App {
     @AppStorage("prefersDarkMode") private var prefersDarkMode = true
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
+    @StateObject private var session = SessionStore()
+
     init() {
         Self.registerBundledFonts()
     }
@@ -22,17 +24,20 @@ struct engelApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if hasCompletedOnboarding {
-                    ContentView()
-                        .tint(ThemeTokens.colors.ink)
-                } else {
+                if !session.isAuthenticated {
+                    LoginView()
+                } else if !hasCompletedOnboarding {
                     OnboardingView {
                         withAnimation {
                             hasCompletedOnboarding = true
                         }
                     }
+                } else {
+                    ContentView()
+                        .tint(ThemeTokens.colors.ink)
                 }
             }
+            .environmentObject(session)
             .preferredColorScheme(preferredColorScheme)
         }
         .modelContainer(for: [SDEntry.self, SDInsight.self])
