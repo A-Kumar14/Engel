@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum ThemeTokens {
     static let colors = Colors()
@@ -8,18 +9,30 @@ enum ThemeTokens {
 }
 
 struct Colors {
-    let bg = Color(hex: 0x0A0A0B)
+    let bg = Color(light: 0xF5F0E8, dark: 0x0A0A0B)
     let bgElevated = Color("engel-cream")
     let ink = Color("engel-ink")
     let inkDim = Color("engel-ink-dim")
-    let inkFaint = Color(hex: 0x3A3731)
+    let inkFaint = Color(light: 0x9E9889, dark: 0x3A3731)
     let green = Color("engel-green")
-    let greenDeep = Color(hex: 0x14532D)
+    let greenDeep = Color(light: 0x14532D, dark: 0x22C55E)
     let red = Color("engel-red")
-    let redDeep = Color(hex: 0x4C1414)
-    let line = Color.white.opacity(0.08)
-    let lineSoft = Color.white.opacity(0.05)
-    let bgCard = Color(hex: 0x141413)
+    let redDeep = Color(light: 0x4C1414, dark: 0xEF4444)
+    let line = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? .white.withAlphaComponent(0.08)
+            : .black.withAlphaComponent(0.08)
+    })
+    let lineSoft = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? .white.withAlphaComponent(0.05)
+            : .black.withAlphaComponent(0.05)
+    })
+    let bgCard = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.078, green: 0.078, blue: 0.075, alpha: 1)
+            : UIColor(red: 0.98, green: 0.97, blue: 0.95, alpha: 1)
+    })
 }
 
 struct Spacing {
@@ -63,5 +76,17 @@ extension Color {
             blue: Double(hex & 0xFF) / 255,
             opacity: 1
         )
+    }
+
+    init(light: UInt32, dark: UInt32) {
+        self.init(UIColor { traits in
+            let hex = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(
+                red: CGFloat((hex >> 16) & 0xFF) / 255,
+                green: CGFloat((hex >> 8) & 0xFF) / 255,
+                blue: CGFloat(hex & 0xFF) / 255,
+                alpha: 1
+            )
+        })
     }
 }
