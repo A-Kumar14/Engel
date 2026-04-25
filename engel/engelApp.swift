@@ -21,18 +21,19 @@ struct engelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if hasCompletedOnboarding {
-                ContentView()
-                    .tint(ThemeTokens.colors.ink)
-                    .preferredColorScheme(preferredColorScheme)
-            } else {
-                OnboardingView {
-                    withAnimation {
-                        hasCompletedOnboarding = true
+            Group {
+                if hasCompletedOnboarding {
+                    ContentView()
+                        .tint(ThemeTokens.colors.ink)
+                } else {
+                    OnboardingView {
+                        withAnimation {
+                            hasCompletedOnboarding = true
+                        }
                     }
                 }
-                .preferredColorScheme(preferredColorScheme)
             }
+            .preferredColorScheme(preferredColorScheme)
         }
         .modelContainer(for: [SDEntry.self, SDInsight.self])
     }
