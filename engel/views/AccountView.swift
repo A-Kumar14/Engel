@@ -63,8 +63,7 @@ struct AccountView: View {
         .background(Color(.systemBackground).ignoresSafeArea())
         .navigationBarHidden(true)
         .sheet(isPresented: $showLogoutSheet) {
-            LogoutSheet()
-                .presentationDetents([.medium])
+            LogoutSheet(isPresented: $showLogoutSheet)
         }
         .alert("Two-factor authentication", isPresented: $showTwoFAAlert) {
             Button("OK", role: .cancel) {}
@@ -370,70 +369,5 @@ struct AccountView: View {
         }
 
         return lines.joined(separator: "\n")
-    }
-}
-
-// MARK: - Logout Sheet
-
-struct LogoutSheet: View {
-    @EnvironmentObject private var session: SessionStore
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Handle
-            Capsule()
-                .fill(ThemeTokens.colors.inkDim.opacity(0.3))
-                .frame(width: 36, height: 5)
-                .padding(.top, 10)
-
-            Spacer().frame(height: 32)
-
-            Text("Sign out?")
-                .font(AppTypography.display(size: 26, weight: .light))
-                .foregroundStyle(ThemeTokens.colors.ink)
-
-            Text("Your fragments stay on this device.\nYou\u{2019}ll need your phone to sign back in.")
-                .font(AppTypography.mono(size: 12, weight: .regular))
-                .foregroundStyle(ThemeTokens.colors.inkDim)
-                .multilineTextAlignment(.center)
-                .lineSpacing(12 * 0.5)
-                .padding(.top, 10)
-
-            Spacer().frame(height: 32)
-
-            // Sign out button
-            Button {
-                session.signOut()
-                dismiss()
-            } label: {
-                Text("SIGN OUT")
-                    .font(AppTypography.mono(size: 14, weight: .semibold))
-                    .tracking(0.8)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color(hex: 0xC83030))
-                    )
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 22)
-
-            // Cancel
-            Button {
-                dismiss()
-            } label: {
-                Text("Cancel")
-                    .font(AppTypography.mono(size: 13, weight: .regular))
-                    .foregroundStyle(ThemeTokens.colors.inkDim)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 8)
-
-            Spacer()
-        }
-        .background(Color(.systemBackground).ignoresSafeArea())
     }
 }
