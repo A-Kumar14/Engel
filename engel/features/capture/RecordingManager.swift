@@ -46,6 +46,8 @@ final class RecordingManager: NSObject {
     private static let maxDuration: Int = 30
 
     func requestMicrophonePermission() async -> Bool {
+        if isPreview { return false }
+
         if #available(iOS 17, *) {
             return await AVAudioApplication.requestRecordPermission()
         } else {
@@ -57,7 +59,16 @@ final class RecordingManager: NSObject {
         }
     }
 
+    private var isPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
+
     func startRecording() {
+        if isPreview {
+            state = .failed(message: "Recording is not available in previews.")
+            return
+        }
+
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
