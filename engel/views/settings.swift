@@ -26,6 +26,23 @@ struct SettingsView: View {
         ScrollView(showsIndicators: false) {
             LazyVStack(alignment: .leading, spacing: 0) {
 
+                // MARK: - Account
+
+                sectionLabel("ACCOUNT")
+
+                settingsCard {
+                    NavigationLink {
+                        AccountView()
+                    } label: {
+                        settingsChevronRow(
+                            title: "Account",
+                            detail: "Phone, sign-in, privacy",
+                            icon: "chevron.right"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 // MARK: - Appearance
 
                 sectionLabel("APPEARANCE")
