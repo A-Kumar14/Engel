@@ -99,6 +99,26 @@ struct ContentView: View {
 
     // SwiftData queries
     @Query(sort: \SDEntry.createdAt, order: .reverse) private var allEntries: [SDEntry]
+    @Query(
+        filter: #Predicate<SDEntry> { entry in entry.globe == "green" },
+        sort: \SDEntry.createdAt,
+        order: .reverse
+    ) private var greenEntries: [SDEntry]
+    @Query(
+        filter: #Predicate<SDEntry> { entry in entry.globe == "red" },
+        sort: \SDEntry.createdAt,
+        order: .reverse
+    ) private var redEntries: [SDEntry]
+    @Query(
+        filter: #Predicate<SDEntry> { entry in entry.globe == "mixed" },
+        sort: \SDEntry.createdAt,
+        order: .reverse
+    ) private var mixedEntries: [SDEntry]
+    @Query(
+        filter: #Predicate<SDEntry> { entry in entry.globe == "unsorted" },
+        sort: \SDEntry.createdAt,
+        order: .reverse
+    ) private var unsortedEntries: [SDEntry]
     @Query(sort: \SDInsight.createdAt, order: .reverse) private var insights: [SDInsight]
 
     // State
@@ -117,19 +137,21 @@ struct ContentView: View {
 
     // MARK: - Computed
 
-    private var greenCount: Int { allEntries.filter { $0.globe == "green" }.count }
-    private var redCount: Int { allEntries.filter { $0.globe == "red" }.count }
-    private var unsortedCount: Int { allEntries.filter { $0.globe == "unsorted" || $0.globe == "mixed" }.count }
+    private var greenCount: Int { greenEntries.count }
+    private var redCount: Int { redEntries.count }
+    private var mixedCount: Int { mixedEntries.count }
+    private var unsortedCount: Int { unsortedEntries.count }
 
     private var filteredEntries: [SDEntry] {
-        var result = allEntries
-        if let globeFilter {
-            if globeFilter == .unsorted {
-                result = result.filter { $0.globe == "unsorted" || $0.globe == "mixed" }
-            } else {
-                result = result.filter { $0.globeType == globeFilter }
+        var result: [SDEntry] = {
+            guard let globeFilter else { return allEntries }
+            switch globeFilter {
+            case .green: return greenEntries
+            case .red: return redEntries
+            case .mixed: return mixedEntries
+            case .unsorted: return unsortedEntries
             }
-        }
+        }()
         if !searchText.isEmpty {
             result = result.filter {
                 $0.content.localizedCaseInsensitiveContains(searchText)
@@ -349,6 +371,35 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 12)
+                    }
+
+                    // Mixed pill (only if there are any)
+                    if mixedCount > 0 {
+                        Button {
+                            selectedTab = .entries
+                            globeFilter = .mixed
+                        } label: {
+                            HStack {
+                                Text("\(mixedCount) mixed")
+                                    .font(AppTypography.mono(size: 12, weight: .semibold))
+                                    .foregroundStyle(ThemeTokens.colors.ink)
+                                Text("\u{00B7} both can be true")
+                                    .font(AppTypography.monoXS)
+                                    .foregroundStyle(ThemeTokens.colors.inkDim)
+                                Spacer()
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(ThemeTokens.colors.inkDim)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(ThemeTokens.colors.line, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 10)
                     }
 
                     // Connection chip
@@ -841,6 +892,9 @@ struct ContentView: View {
             }
             recordingManager.state = .processing
             Task {
+                defer {
+                    try? FileManager.default.removeItem(at: audioURL)
+                }
                 do {
                     let response = try await viewModel.transcribeAudio(fileURL: audioURL)
                     recordingManager.reset()
@@ -1219,6 +1273,7 @@ private struct InsightCard: View {
     private var insightTint: Color {
         switch insight.type {
         case .asymmetry: return ThemeTokens.colors.green
+        case .correlation: return .blue
         case .contradiction: return ThemeTokens.colors.red
         case .drift: return .orange
         case .silence: return ThemeTokens.colors.inkDim
@@ -1234,14 +1289,26 @@ struct PointerCloudView: View {
     @Query(sort: \SDEntry.createdAt, order: .reverse) private var entries: [SDEntry]
     @Environment(\.modelContext) private var modelContext
 
-    private var pointerCounts: [(tag: String, count: Int)] {
+    @State private var cachedPointerCounts: [(tag: String, count: Int)] = []
+    @State private var cachedCountMap: [String: Int] = [:]
+
+    private var cacheToken: String {
+        // Cheap token: updates when entries or their pointer counts change.
+        let pointerTotal = entries.reduce(0) { $0 + $1.pointers.count }
+        let latest = entries.first?.createdAt.timeIntervalSince1970 ?? 0
+        return "\(entries.count)-\(pointerTotal)-\(Int(latest))"
+    }
+
+    private func rebuildCache() {
         var counts: [String: Int] = [:]
         for entry in entries {
             for pointer in entry.pointers {
                 counts[pointer, default: 0] += 1
             }
         }
-        return counts.map { (tag: $0.key, count: $0.value) }
+        cachedCountMap = counts
+        cachedPointerCounts = counts
+            .map { (tag: $0.key, count: $0.value) }
             .sorted { $0.count > $1.count }
     }
 
@@ -1252,7 +1319,7 @@ struct PointerCloudView: View {
                     .font(AppTypography.monoXS)
                     .foregroundStyle(ThemeTokens.colors.inkDim)
 
-                if pointerCounts.isEmpty {
+                if cachedPointerCounts.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("No tags yet")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -1266,8 +1333,12 @@ struct PointerCloudView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.secondarySystemBackground))
                 } else {
-                    WrappingHStack(spacing: 10) {
-                        ForEach(pointerCounts, id: \.tag) { item in
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 110), spacing: 10)],
+                        alignment: .leading,
+                        spacing: 10
+                    ) {
+                        ForEach(cachedPointerCounts, id: \.tag) { item in
                             pointerBubble(tag: item.tag, count: item.count)
                         }
                     }
@@ -1279,6 +1350,9 @@ struct PointerCloudView: View {
         }
         .navigationTitle("Tags")
         .navigationBarTitleDisplayMode(.large)
+        .task(id: cacheToken) {
+            rebuildCache()
+        }
     }
 
     @State private var tagToDelete: String?
@@ -1312,7 +1386,7 @@ struct PointerCloudView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             if let tag = tagToDelete {
-                Text("This will remove #\(tag) from \(entries.filter { $0.pointers.contains(tag) }.count) entries.")
+                Text("This will remove #\(tag) from \(cachedCountMap[tag, default: 0]) entries.")
             }
         }
     }

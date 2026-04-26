@@ -29,6 +29,7 @@ enum GlobeType: String, Codable, CaseIterable, Identifiable {
 
 enum InsightType: String, Codable, Identifiable {
     case asymmetry
+    case correlation
     case contradiction
     case drift
     case silence

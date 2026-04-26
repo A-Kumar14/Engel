@@ -52,6 +52,7 @@ class InsightCreate(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     body: str = Field(min_length=1)
     evidence_summary: str = Field(min_length=1)
+    evidence: list[dict] = Field(default_factory=list)
 
 
 class InsightRead(BaseModel):
@@ -60,6 +61,7 @@ class InsightRead(BaseModel):
     title: str
     body: str
     evidence_summary: str
+    evidence: list[dict] = Field(default_factory=list)
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -70,8 +72,40 @@ class TranscriptResponse(BaseModel):
     suggested_globe: str
     suggested_pointers: list[str]
     confidence: float
+    suggested_related_entry_ids: list[int] = Field(default_factory=list)
+
+
+class EntryLinkCreate(BaseModel):
+    to_entry_id: int
+    link_type: str = Field(default="related", min_length=1, max_length=32)
+
+
+class EntryLinkRead(BaseModel):
+    id: int
+    from_entry_id: int
+    to_entry_id: int
+    link_type: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class HealthResponse(BaseModel):
     status: str
     app: str
+
+
+class AutoLinkRequest(BaseModel):
+    related_entry_ids: list[int] = Field(default_factory=list)
+    link_type: str = Field(default="related", min_length=1, max_length=32)
+
+
+class AutoLinkResponse(BaseModel):
+    created: int
+    skipped: int
+    links: list[EntryLinkRead]
+
+
+class SemanticSearchResult(BaseModel):
+    entry: EntryRead
+    score: float
